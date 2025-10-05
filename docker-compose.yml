@@ -2,38 +2,31 @@ version: "3.9"
 
 services:
   web:
-    # Build the image using the multi-stage Dockerfile
     build:
       context: .
       dockerfile: Dockerfile
-      target: runner # final stage from the Dockerfile
+      target: runner
     image: my-next-app:latest
 
-    # Load your production env vars (NEXT_PUBLIC_*, API keys, etc.)
     env_file:
       - .env.production
 
-    # Expose the Next.js server
     ports:
-      - "3000:3000" # host:container
+      - "3000:3000"
 
-    # Good runtime defaults
     restart: unless-stopped
     environment:
-      # Keep in sync with your Dockerfile defaults if you change the port
       PORT: "3000"
       HOSTNAME: "0.0.0.0"
 
-    # Hardening (works because the image runs as a non-root user already)
-    read_only: true          # make filesystem read-only at runtime
+    read_only: true
     tmpfs:
-      - /tmp                 # allow temporary writes for Node.js
+      - /tmp 
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
 
-    # Override the Dockerfile healthcheck to avoid needing curl/wget in the image
     healthcheck:
       test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:'+(process.env.PORT||3000), r=>process.exit((r.statusCode>=200&&r.statusCode<500)?0:1)).on('error',()=>process.exit(1))\""]
       interval: 30s
@@ -41,7 +34,6 @@ services:
       retries: 3
       start_period: 15s
 
-    # Optional: attach to a dedicated network
     networks:
       - webnet
 
